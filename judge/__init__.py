@@ -73,10 +73,11 @@ def judge_program(source_path, testcase_folder, compiler_id, time_limit, memory_
     print(returncode, prog, err)
     if returncode != 0:
         return {"verdict":"Compile Error", "time_usage": 0,
-                "memory_usage": 0, "log": err[:1020]}
+                "memory_usage": 0, "log": err[:1020], score:0}
     max_time = 0
     max_mem = 0
-    for filename in glob.glob(os.path.join(testcase_folder, "*.in")):
+    def case_judge(filename):
+        case_count += 1
         file_in = filename
         file_out = os.path.join(tmp_folder.name, "output.txt")
         std_out = filename[:-2] + "out"
@@ -99,8 +100,23 @@ def judge_program(source_path, testcase_folder, compiler_id, time_limit, memory_
                     "memory_usage": max_mem, "log": None}
         if(int(out[1]) > max_time): max_time = int(out[1])
         max_mem = max(max_mem, int(out[2]))
-    return {"verdict": "Accepted", "time_usage": max_time,
-            "memory_usage": max_mem, "log": None}
+        return {"verdict": "Accepted", "time_usage": max_time,
+                "memory_usage": max_mem, "log": None}
+
+    ac_count = 0
+    case_count = 0
+    verdict = "Accepted"
+    for filename in glob.glob(os.path.join(testcase_folder, "*.in")):
+        verd = case_judge(filename)
+        case_count += 1
+        if verd["verdict"] == "Accepted":
+            ac_count += 1
+        if verd["verdict"] != "Accepted":
+            verdict = verd["verdict"]
+    if case_count == 0: case_count = 1
+    score = ac_count * 100 / case_count
+    return {"verdict": verdict, "time_usage": max_time,
+            "memory_usage": max_mem, "log": None, "score": score}
 
 def judge(sid, *args):
     verdict = judge_program(*args)

@@ -12,7 +12,7 @@ from ..tools import count_page
 
 from .. import judge
 
-from judge.config import COMPILER_FILEEXT_LIST
+from judge.config import COMPILER_FILEEXT_LIST, COMPILER_NAME_LIST
 from ..tools import ROOT_PRIVILEGE
 
 
@@ -32,13 +32,36 @@ def list_contests(page = 1):
     return render_template('contests.html', contests=contests, page=page,
                            all_page = count_page(Contest, 20))
 
+@oj.route('/code/<int:sid>')
+@login_required
+def show_code(sid):
+    s = Submission.query.get_or_404(sid)
+    accessable = False
+    if current_user.privilege_level >= 1: accessable = True
+    if s.owner == current_user: accessable = True
+    curtime = datetime.datetime.now()
+    if s.contest_id and Contest.query.get(s.contest_id).end_time < curtime: accessable = True
+    if accessable:
+        filename = os.path.join(app.config['SUBMISSION_FOLDER'], str(s.id) + COMPILER_FILEEXT_LIST[s.compiler_id])
+        content = ''.join(open(filename, 'r').readlines())
+        u = User.query.get(s.user_id)
+        p = Problem.query.get(s.problem_id)
+        c = Contest.query.get(s.contest_id) if s.contest_id else None
+        lang = COMPILER_NAME_LIST[s.compiler_id]
+        return render_template('show_code.html', code=content, s = s, u = u, c = c, p = p, lang=lang)
+    flash('You are not allowed to see this code.', 'error')
+    return redirect('/')
 
 @oj.route('/status')
 @oj.route('/status/<int:page>')
 def list_status(page = 1):
     from sqlalchemy import or_
     curtime = datetime.datetime.now()
-    submissions = Submission.query.outerjoin(Contest).order_by(Submission.id.desc())\
+    if current_user.is_authenticated:
+        submissions = Submission.query.order_by(Submission.id.desc())\
+                                  .paginate(page=page, per_page=20).items
+    else:
+        submissions = Submission.query.outerjoin(Contest).order_by(Submission.id.desc())\
                                   .filter(or_(Contest.id == None,Contest.end_time<curtime)).paginate(page=page, per_page=20).items
     return render_template('status.html', submissions=submissions, page=page,
                            all_page = count_page(Submission, 20))
@@ -92,7 +115,7 @@ def contest(id = 1):
     for u in users:
         verdicts = []
         for p in contest.problems:
-            q = db.session.query(Standing.score, Standing.score2)\
+            q = db.session.query(Standing.score, Standing.score2, Standing.sid)\
                     .filter(Standing.contest_id==contest.id)\
                     .filter(Standing.problem_id==p.id)\
                     .filter(Standing.user_id == u[0])
@@ -161,7 +184,7 @@ def save_to_database(job_id):
                     user_id = s.user_id,
                 )
         _delta = datetime.datetime.now() - contest.start_time
-        rc.add_record(verdict['score'], intime)
+        rc.add_record(verdict['score'], intime, s.id)
         db.session.add(rc)
         db.session.commit()
 

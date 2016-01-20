@@ -64,8 +64,8 @@
                     <tr>
                         <td> {{ item[0].display_name }} </td>
                         <td> {{ item[1] }} </td>
-                        {% for (score,score2) in item[2] %}
-                        <td> {{score or 0}}({{score2 or 0}}) </td>
+                        {% for (score,score2,sid) in item[2] %}
+                        <td><a href="{{url_for('oj.show_code',sid=sid)}}"> {{score or 0}}({{score2 or 0}}) </a></td>
                         {% endfor %}
                     </tr>
                     {% endfor %}

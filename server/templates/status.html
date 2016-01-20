@@ -28,7 +28,11 @@
                         <th scope="row">{{s.id}}</th>
                         <td><a href="{{url_for('oj.problem', pid=s.problem.id)}}"><strong>{{s.problem.id}}</strong></a></td>
                         <td><a><strong>{{s.owner.display_name}}</strong></a></td>
+                        {% if is_admin or s.owner == current_user %}
+                        <td><a href="{{url_for('oj.show_code', sid=s.id)}}">{{s.compiler}}</a></td>
+                        {% else %}
                         <td>{{s.compiler}}</td>
+                        {% endif %}
                         <td>{{s.score}}</td>
                         <td class="status-verdict status-verdict-{{s.verdict}}">{{s.verdict or 'Judging'}}</td>
                         <td>{{'' if s.time_usage == None else s.time_usage}}</td>

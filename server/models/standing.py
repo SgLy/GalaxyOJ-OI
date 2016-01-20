@@ -12,11 +12,14 @@ class Standing(db.Model):
     score = db.Column(db.Integer, default=0)
     score2 = db.Column(db.Integer, default=0)
 
+    sid = db.Column(db.Integer, default=0)
+
     #only the last submission is valid
-    def add_record(self, score, intime):
+    def add_record(self, score, intime, sid):
         if self.score2 is None: self.score2 = 0
         if intime: 
             self.score = score
+            self.sid = sid
             self.score2 = max(self.score2, score)
         else: 
             self.score2 = max(self.score2, score)

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% from 'tools.html' import pagination %}
+
+{% set current_view = 'Status' %}
+
+{% block title %}Show codes - Galaxy OJ{% endblock %}
+
+{% block page_content %}
+<div class="container">
+    <div class="row">
+        <div class="col col-md-offset-2">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                <p> Code for submission {{s.id}} </p>
+                </div>
+                <div class="panel-body">
+                {% if c %}
+                <p> Contest: {{c.title}} </p>
+                {% endif %}
+                <p> Problem: {{p.title}} </p>
+                <p> Language: {{lang}} </p>
+                <p> User: {{u.display_name}} </p>
+                    <pre>
+{{code}}
+                    </pre>
+                </div>
+            </div>
+            <br>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

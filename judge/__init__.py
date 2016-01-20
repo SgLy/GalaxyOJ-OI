@@ -73,38 +73,30 @@ def judge_program(source_path, testcase_folder, compiler_id, time_limit, memory_
     print(returncode, prog, err)
     if returncode != 0:
         return {"verdict":"Compile Error", "time_usage": 0,
-                "memory_usage": 0, "log": err[:1020], score:0}
-    max_time = 0
-    max_mem = 0
+                "memory_usage": 0, "log": prog if prog is not None else err[:1020], "score":0}
     def case_judge(filename):
-        case_count += 1
         file_in = filename
         file_out = os.path.join(tmp_folder.name, "output.txt")
         std_out = filename[:-2] + "out"
         (returncode, out, err) = execute(prog, file_in, file_out,
                                          time_limit, memory_limit,
                                          tmp_folder.name)
-        print(returncode, out, err)
+        run_time = int(out[1])
+        mem_usage = int(out[2])
+
         if out[0] != "OK":
-            print(out)
-            return {"verdict": out[0], "time_usage": out[1],
-                    "memory_usage": out[2], "log": None}
-        print(out[1])
-        print(time_limit)
+            return {"verdict": out[0], "time":run_time, "mem":mem_usage}
         if int(out[1]) > time_limit:
-            return {"verdict": "Time Limit Exceeded", "time_usage": out[1],
-                    "memory_usage": out[2], "log": None}
+            return {"verdict": "Time Limit Exceeded", "time":run_time, "mem":mem_usage}
         (verdict, err) = check(file_out, std_out)
         if verdict == False:
-            return {"verdict": "Wrong Answer", "time_usage": max_time,
-                    "memory_usage": max_mem, "log": None}
-        if(int(out[1]) > max_time): max_time = int(out[1])
-        max_mem = max(max_mem, int(out[2]))
-        return {"verdict": "Accepted", "time_usage": max_time,
-                "memory_usage": max_mem, "log": None}
+            return {"verdict": "Wrong Answer", "time": run_time, "mem": mem_usage}
+        return {"verdict": "Accepted", "time": run_time, "mem": mem_usage}
 
     ac_count = 0
     case_count = 0
+    max_mem = 0
+    max_time = 0
     verdict = "Accepted"
     for filename in glob.glob(os.path.join(testcase_folder, "*.in")):
         verd = case_judge(filename)
@@ -113,6 +105,8 @@ def judge_program(source_path, testcase_folder, compiler_id, time_limit, memory_
             ac_count += 1
         if verd["verdict"] != "Accepted":
             verdict = verd["verdict"]
+        max_mem = max(max_mem, verd["mem"])
+        max_time = max(max_time, verd["time"])
     if case_count == 0: case_count = 1
     score = ac_count * 100 / case_count
     return {"verdict": verdict, "time_usage": max_time,

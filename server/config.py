@@ -6,7 +6,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 # config the following lines when used in production environment
 CONFIG_NAME = os.getenv('CONFIG_NAME', 'DEVELOPMENT')
-DATABASE_URI = os.getenv('DATABASE_URI', 'postgresql://localhost/galaxyoj_dev')
+DATABASE_URI = os.getenv('DATABASE_URI', 'postgresql://localhost/galaxyoj')
 SECRET_KEY = os.getenv('SECRET_KEY', 'Something you will never know:-)')
 DATA_FOLDER = os.getenv('DATA_FOLDER', os.path.join(basedir, 'data'))
 MAX_CONTENT_LENGTH = 16*1024*1024

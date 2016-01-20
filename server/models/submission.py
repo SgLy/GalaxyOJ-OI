@@ -15,6 +15,7 @@ class Submission(db.Model):
     time_usage = db.Column(db.Integer)
     memory_usage = db.Column(db.Integer)
     code_length = db.Column(db.Integer)
+    score = db.Column(db.Integer)
     verdict = db.Column(db.Enum('Accepted', 'Wrong Answer', 'Runtime Error',
         'Time Limit Exceeded', 'Memory Limit Exceeded', 'Restrict Function',
         'Output Limit Exceeded', 'Presentation Error', 'Compile Error',

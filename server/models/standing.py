@@ -9,19 +9,17 @@ class Standing(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     problem_id = db.Column(db.Integer, db.ForeignKey('problem.id'))
 
-    actime = db.Column(db.Integer, default=0)
-    penalty = db.Column(db.Integer, default=0)
-    submissions = db.Column(db.Integer, default=0)
+    score = db.Column(db.Integer, default=0)
+    score2 = db.Column(db.Integer, default=0)
 
-    def add_record(self, verdict, _time):
-        if self.actime: return
-        if verdict == 'Accepted':
-            self.actime = _time.seconds / 60
-            self.penalty = self.actime + self.submissions * 20
-        else:
-            if self.submissions is None:
-                self.submissions = 0
-            self.submissions += 1
+    #only the last submission is valid
+    def add_record(self, score, intime):
+        if self.score2 is None: self.score2 = 0
+        if intime: 
+            self.score = score
+            self.score2 = max(self.score2, score)
+        else: 
+            self.score2 = max(self.score2, score)
 
     def __repr__(self):
         return '<Standing %d>' % self.id if self.id else '<New Standing>'

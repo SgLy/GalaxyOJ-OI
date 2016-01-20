@@ -36,8 +36,10 @@ def list_contests(page = 1):
 @oj.route('/status')
 @oj.route('/status/<int:page>')
 def list_status(page = 1):
-    submissions = Submission.query.order_by(Submission.id.desc())\
-                                  .paginate(page=page, per_page=20).items
+    from sqlalchemy import or_
+    curtime = datetime.datetime.now()
+    submissions = Submission.query.outerjoin(Contest).order_by(Submission.id.desc())\
+                                  .filter(or_(Contest.id == None,Contest.end_time<curtime)).paginate(page=page, per_page=20).items
     return render_template('status.html', submissions=submissions, page=page,
                            all_page = count_page(Submission, 20))
 
@@ -90,22 +92,21 @@ def contest(id = 1):
     for u in users:
         verdicts = []
         for p in contest.problems:
-            q = db.session.query(Standing.actime, Standing.penalty, Standing.submissions)\
+            q = db.session.query(Standing.score, Standing.score2)\
                     .filter(Standing.contest_id==contest.id)\
                     .filter(Standing.problem_id==p.id)\
                     .filter(Standing.user_id == u[0])
             result = list(q)
             verdicts.extend(result)
-        ac_num = sum(bool(u[0]) for u in verdicts)
-        penalty = sum(u[1] for u in verdicts)
-        standing.append((User.query.get(u[0]), ac_num, penalty, verdicts))
-    standing.sort(key = lambda u:(u[1],u[2]), reverse=True)
+        sumscore = sum(map(lambda u:u.score, verdicts))
+        standing.append((User.query.get(u[0]), sumscore, verdicts))
+    standing.sort(key = lambda u:u[1], reverse=True)
     accepted_problems = set()
     if current_user.is_authenticated:
         ac_list = db.session.query(Standing.problem_id)\
                     .filter(Standing.user_id == current_user.id)\
                     .filter(Standing.contest_id == contest.id)\
-                    .filter(Standing.actime > 0).all()
+                    .filter(Standing.score == 100).all()
         accepted_problems = set(map(lambda p: p[0], ac_list))
     return render_template('show_contest.html', c=contest,
             standing=standing, acs = accepted_problems)
@@ -147,23 +148,22 @@ def save_to_database(job_id):
     s = Submission.query.get(sid)
     if s.contest_id:
         contest = Contest.query.get(s.contest_id)
-        if datetime.datetime.now() < contest.end_time:
-            rc = Standing.query\
-                    .filter(Standing.contest_id==s.contest_id)\
-                    .filter(Standing.problem_id==s.problem_id)\
-                    .filter(Standing.user_id==s.user_id)\
-                    .first()
-            if rc is None:
-                rc = Standing(
-                        contest_id = s.contest_id,
-                        problem_id = s.problem_id,
-                        user_id = s.user_id,
-                        submissions = 0
-                    )
-            _delta = datetime.datetime.now() - contest.start_time
-            rc.add_record(verdict['verdict'], _delta)
-            db.session.add(rc)
-            db.session.commit()
+        intime = datetime.datetime.now() < contest.end_time
+        rc = Standing.query\
+                .filter(Standing.contest_id==s.contest_id)\
+                .filter(Standing.problem_id==s.problem_id)\
+                .filter(Standing.user_id==s.user_id)\
+                .first()
+        if rc is None:
+            rc = Standing(
+                    contest_id = s.contest_id,
+                    problem_id = s.problem_id,
+                    user_id = s.user_id,
+                )
+        _delta = datetime.datetime.now() - contest.start_time
+        rc.add_record(verdict['score'], intime)
+        db.session.add(rc)
+        db.session.commit()
 
 
 def send_to_judge(submit, problem):

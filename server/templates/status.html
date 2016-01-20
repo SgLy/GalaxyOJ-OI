@@ -15,6 +15,7 @@
                     <th>Problem</th>
                     <th>User</th>
                     <th>Compiler</th>
+                    <th>Score</th>
                     <th>Verdict</th>
                     <th>Time</th>
                     <th>Memory</th>
@@ -28,6 +29,7 @@
                         <td><a href="{{url_for('oj.problem', pid=s.problem.id)}}"><strong>{{s.problem.id}}</strong></a></td>
                         <td><a><strong>{{s.owner.display_name}}</strong></a></td>
                         <td>{{s.compiler}}</td>
+                        <td>{{s.score}}</td>
                         <td class="status-verdict status-verdict-{{s.verdict}}">{{s.verdict or 'Judging'}}</td>
                         <td>{{'' if s.time_usage == None else s.time_usage}}</td>
                         <td>{{'' if s.memory_usage == None else s.memory_usage}}</td>
